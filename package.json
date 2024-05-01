@@ -1,0 +1,24 @@
+{
+  "name": "myfvmap",
+  "version": "1.0.0",
+  "description": "Testing mapping capabilities for eventual usage in FactoryView",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha"
+  },
+  "keywords": [
+    "factoryview",
+    "geo",
+    "plantmap"
+  ],
+  "author": "\"Loren Gardner \\lgardn50@ford.com \\ https://git.com/lgardn50_ford\"",
+  "license": "ISC",
+  "dependencies": {
+    "@maptiler/sdk": "^2.0.3",
+    "axios": "^1.6.8",
+    "leaflet": "^1.9.4"
+  },
+  "devDependencies": {
+    "eslint": "^9.1.1"
+  }
+}
