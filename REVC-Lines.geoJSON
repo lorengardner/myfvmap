@@ -1,0 +1,40 @@
+{
+    "type": "FeatureCollection",
+    "name": "Process-Lines",
+    "crs": { 
+        "type": "name", 
+        "properties": { 
+            "name": "urn:ogc:def:crs:EPSG::4269" 
+            } 
+        },
+    "features": [
+        { 
+            "type": "Feature", 
+            "properties": 
+            { 
+                "Layer": "Line", 
+                "Department": "C", 
+                "Line": "4A", 
+                "LineName": "C4A"
+            }, 
+            "geometry": { 
+                "type": "LineString", 
+                "coordinates": [[ -83.16010741415846, 42.306997050972349 ],[ -83.160626386316082, 42.307711779758407 ],[ -83.160522831231091, 42.307753208214869 ],[ -83.160003859913743, 42.307038478955036 ],[ -83.16010741415846, 42.306997050972349 ]]
+            } 
+        },
+        {
+            "type": "Feature", 
+            "properties": 
+            { 
+                "Layer": "Line", 
+                "Department": "C", 
+                "Line": "5A", 
+                "LineName": "C5A"
+            }, 
+            "geometry":{
+                "type":"LineString",
+                "coordinates":[[-83.16094548995511,42.30815124019786],[-83.16085798782548,42.30821477776685],[-83.16052283054654,42.30775320871193],[-83.16061033267617,42.30768967114294],[-83.16094548995511,42.30815124019786]]
+            }
+        }
+    ]
+}

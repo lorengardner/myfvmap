@@ -1,0 +1,504 @@
+<head>
+    <title>My FactoryView Map</title>
+    <style>
+        *,
+        html {
+            margin: 0;
+            padding: 0;
+            border: 0;
+        }
+
+        html {
+            width: 100%;
+            height: 100%;
+        }
+
+        body {
+            width: 100%;
+            height: 100%;
+            position: relative;
+            background-color: rgb(236, 152, 42);
+        }
+
+        .center {
+            width: 100%;
+            height: 50%;
+            margin: 0;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: rgb(109, 108, 108);
+            font-family: "Trebuchet MS", Helvetica, sans-serif;
+            text-align: center;
+        }
+
+        h1 {
+            font-size: 144px;
+        }
+
+        p {
+            font-size: 64px;
+        }
+
+        #map { height: 70%; width:90%; margin: 80px auto; canvas {cursor: crosshair};}
+    </style>
+
+    <link rel='stylesheet' href='https://unpkg.com/maplibre-gl@4.1.3/dist/maplibre-gl.css' />
+    <script src='https://unpkg.com/maplibre-gl@4.1.3/dist/maplibre-gl.js'></script>
+
+</head>
+
+<body>
+    <style>
+        #file {
+            position: absolute;
+            top: 0;
+            left: 0;
+        }
+        .time-slide {
+            font: 12px/20px "Helvetica Neue", Arial, Helvetica, sans-serif;
+            position: absolute;
+            width: 25%;
+            top: 0;
+            right: 0;
+            padding: 10px;
+        }
+        .time-slide .time-slide-inner {
+            background-color: #fff;
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+            border-radius: 3px;
+            padding: 10px;
+            margin-bottom: 10px;
+        }
+        .time-slide h2 {
+            line-height: 24px;
+            display: block;
+            margin: 0 0 10px;
+        }
+        .time-slide input {
+            background-color: transparent;
+            display: inline-block;
+            width: 100%;
+            position: relative;
+            margin: 0;
+            cursor: ew-resize;
+        }
+    </style>
+    <style>
+        #zoom {
+            display: block;
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translate(-50%);
+            width: 50%;
+            height: 40px;
+            padding: 10px;
+            border: none;
+            border-radius: 3px;
+            font-size: 12px;
+            text-align: center;
+            color: #fff;
+            background: #ee8a65;
+        }
+    </style>
+
+    <div id="map"></div>
+
+    <input
+        type="file"
+        id="file"
+        name="file"
+        accept="application/geo+json,application/vnd.geo+json,.geojson"
+    />
+    <div class="time-slide top">
+        <div class="time-slide-inner">
+            <h2>Connector Concerns Over Time</h2>
+            <label id="day"></label>
+            <input id="slider" type="range" min="113" max="116" step="1" value="116" />
+        </div>
+    </div>
+
+    <div id="showzoom"></div>
+    <div id="showpitch"></div>
+    <div id="showlongitude"></div>
+    <div id="showlatitude"></div>
+    <div id="showbearing"></div>
+    <div id="showClickLong"></div>
+    <div id="showClickLat"></div>
+
+    <script src="https://d3js.org/d3.v3.min.js" charset='utf-8'></script>
+    <script>
+	    const map = new maplibregl.Map({
+            container: 'map',
+            center: [-83.16230556775794,42.30863183271924],
+            style: 
+                //'https://api.maptiler.com/maps/basic-v2/style.json?key=zkCcGEA9E1IFjsh3UDW9',
+                'https://api.maptiler.com/maps/streets/style.json?key=get_your_own_OpIi9ZULNHzrESv6T2vL',
+            zoom: 14,
+            mablibrelogo: false,
+        });
+
+        const days = [
+            '4/23/2024',
+            '4/24/2024',
+            '4/25/2024',
+            '4/26/2024'
+        ]
+
+        function filterBy(day) {
+            const filters = ['==', 'yearDay',day];
+            map.setFilter('connector-concern-circles', filters);
+            //map.setFilter('connector-labels', filters);
+            //map.setFilter('concern-circles', filters);
+
+            document.getElementById('day')
+                .textContent = days[day-113];
+            document.getElementById('slider')
+                .value = day
+
+            console.log(filters)
+        }
+
+        map.on('load', () => {
+            // const image = await map.loadImage('https://maplibre.org/maplibre-gl-js/docs/assets/osgeo-logo.png');
+            // map.addImage('svt-logo', image.data);
+
+            document.getElementById('showzoom').innerHTML = map.getZoom();
+            let {lng, lat} = map.getCenter();
+            document.getElementById('showlongitude').innerHTML = lng;
+            document.getElementById('showlatitude').innerHTML = lat;
+            document.getElementById('showbearing').innerHTML = map.getBearing();
+            document.getElementById('showpitch').innerHTML = map.getPitch();
+
+            d3.json(
+                //'http://localhost:3000/concerns',
+                'https://maplibre.org/maplibre-gl-js/docs/assets/significant-earthquakes-2015.geojson',
+                (err, data) => {
+                    if (err) throw err;
+
+                    //console.log("inside d3");
+                    //console.log(data);
+
+                    // data.features = data.features.map((d) => {
+                    //     d.properties.yearDay = +d.properties.yearDay;
+                        
+                    //     return d;
+                    // });
+
+                    console.log(data);
+
+                    map.addSource('concerns', {
+                        'type': 'geojson',
+                        data
+                    });
+
+                    map.addLayer({
+                        'id': 'connector-concern-circles',
+                        'type': 'circle',
+                       'source': 'concerns',
+                       'paint': {
+                            'circle-color': [
+                                'interpolate',
+                                ['linear'],
+                                ['get', 'quantity'],
+                                1,
+                                'rgba(255, 255, 255, 0)',
+                                10,
+                                'rgba(255, 255, 255, 0)',
+                                20,
+                                'rgba(255, 255, 255, 0)',
+                                40,
+                                'rgba(255, 255, 255, 0)'
+                            ],
+                            'circle-opacity': 0.75,
+                            'circle-radius': [
+                                'interpolate',
+                                ['linear'],
+                                ['get', 'quantity'],
+                                1,
+                                2,
+                                10,
+                                4,
+                                20,
+                                8,
+                                40,
+                                12,
+                                80,
+                                16
+                            ]
+                       }
+                    });
+
+                    filterBy(113);
+
+                    document
+                        .getElementById('slider')
+                        .addEventListener('input', (e) => {
+                            const day = parseInt(e.target.value, 10);
+                             filterBy(day);
+                             console.log(`${day}: ${days[day-113]}`);
+                         });
+
+                    //const orderedzlayerIds = map.getLayersOrder();
+                    //console.log(orderedzlayerIds)
+
+                    
+                    //console.log(map.getLayer('connector-concern-circles').getFilter())
+                }
+            )
+
+            
+        })
+
+        map.on('click',(e) => {
+            console.log(e)
+            console.log(e.point)
+            console.log(e.lngLat)
+            let lng = e.lngLat.lng;
+            console.log(lng);
+            document.getElementById('showClickLong').innerHTML = e.lngLat.lng;
+            let lat = e.lngLat.lat;
+            console.log(lat);
+            document.getElementById('showClickLat').innerHTML = e.lngLat.lat;
+            const features = map.queryRenderedFeatures(e.point);
+
+            console.log(features)
+        });
+
+        map.on('zoom', async () => {
+            document.getElementById('showzoom').innerHTML = map.getZoom();
+            let {lng, lat} = map.getCenter();
+            document.getElementById('showlongitude').innerHTML = lng;
+            document.getElementById('showlatitude').innerHTML = lat;
+        });
+
+        map.on('pitch', async () => {
+            document.getElementById('showpitch').innerHTML = map.getPitch();
+            let {lng, lat} = map.getCenter();
+            document.getElementById('showlongitude').innerHTML = lng;
+            document.getElementById('showlatitude').innerHTML = lat;
+        });
+
+        map.on('rotate', async () => {
+            document.getElementById('showbearing').innerHTML = map.getBearing();
+            let {lng, lat} = map.getCenter();
+            document.getElementById('showlongitude').innerHTML = lng;
+            document.getElementById('showlatitude').innerHTML = lat;
+        });
+
+        map.on('move', async () => {
+            let {lng, lat} = map.getCenter();
+            document.getElementById('showlongitude').innerHTML = lng;
+            document.getElementById('showlatitude').innerHTML = lat;
+        });
+
+        map.setRenderWorldCopies(status === 'false')
+        //map.setPaintProperty('building-3d', 'fill-opacity', 0)
+
+        // const revcreader = new FileReader();
+
+        // revcreader.onload = function() {
+
+        // }
+
+        // revcreader.readAsText('REVC-Map4.geojson', 'UTF-8')
+
+        function handleFileSelect(evt) {
+            const file = evt.target.files[0]; // Read first selected file
+
+            const reader = new FileReader();
+
+            console.log(`handleFileSelection triggered on file ${file.name}`)
+
+            reader.onload = function (theFile) {
+                console.log(`reader loaded for file...`)
+
+                // Parse as (geo)JSON
+                const geoJSONcontent = JSON.parse(theFile.target.result);
+
+                console.log(`geoJSON parsed ${geoJSONcontent.type} with name = ${geoJSONcontent.name}`)
+
+                if (geoJSONcontent.name.localeCompare("ford-buildings") == 0) {
+                    console.log(`Adding layers for name = ${geoJSONcontent.name}`)
+                    // Add as source to the map
+                    map.addSource('building-source', {
+                        'type': 'geojson',
+                        'data': geoJSONcontent
+                    });
+
+                    map.addLayer({
+                        'id': 'building-walls',
+                        'type': 'line',
+                        'source': 'building-source',
+                        'paint': {
+                            'line-color': 'black',
+                            'line-width': 2,
+                            
+                        },
+                        'layout': {
+                            'line-join': 'round'
+                        },
+                        'filter': ['==', '$type', 'Polygon']
+                    });
+
+                    map.addLayer({
+                        'id': 'non-connected-building-walls',
+                        'type': 'line',
+                        'source': 'building-source',
+                        'paint': {
+                            'line-color': 'red',
+                            'line-width': 4,
+                            
+                        },
+                        'layout': {
+                            'line-join': 'round'
+                        },
+                        'filter': ['==', '$type', 'LineString']
+                    });
+
+                    map.addLayer({
+                        'id': 'building-floor',
+                        'type':'fill',
+                        'source': 'building-source',
+                        'paint': {
+                            'fill-color': '#D6D6D6',
+                            'fill-outline-color': 'black',
+                            //'fill-opacity': 0.4,
+                        },
+                        'filter': ['==', '$type', 'Polygon']
+                    });
+
+                }
+
+                if (geoJSONcontent.name.localeCompare("Stations-Raw") == 0){
+                    console.log(`Adding layers for name = ${geoJSONcontent.name}`)
+                    map.addSource('all-stations-source', {
+                        'type': 'geojson',
+                        'data': geoJSONcontent
+                    })
+
+                    map.addLayer({
+                        'id': 'all-stations',
+                        'type': 'line',
+                        'source': 'all-stations-source',
+                        'paint': {
+                            'line-color': 'black',
+                            'line-width': 1,
+                        }
+                   })
+                }
+
+                if (geoJSONcontent.name.localeCompare("Workstations") == 0){
+                    console.log(`Adding layers for name = ${geoJSONcontent.name}`)
+                            map.addSource('workstations-source', {
+                        'type': 'geojson',
+                        'data': geoJSONcontent
+                    })
+
+                    map.addLayer({
+                        'id': 'worktations',
+                        'type': 'line',
+                        'source': 'workstations-source',
+                        'paint': {
+                            'line-color': 'red',
+                            'line-width': 2,
+                        }
+                   })
+
+                   map.addLayer({
+                        'id': 'ws-center',
+                        'type': 'symbol',
+                        'source': 'workstations-source',
+                        'layout': {
+                            'icon-image': 'svt-logo'
+                        },
+                        'filter': ['==', '$type', 'Point']
+                   })
+                }
+                
+                if (geoJSONcontent.name.localeCompare("Process-Lines") == 0){
+                    console.log(`Adding layers for name = ${geoJSONcontent.name}`)
+                    map.addSource('process-lines-source', {
+                        'type': 'geojson',
+                        'data': geoJSONcontent
+                    })
+
+                    map.addLayer({
+                        'id': 'process-lines',
+                        'type': 'fill',
+                        'source': 'process-lines-source',
+                        'paint': {
+                            'fill-color': 'grey',
+                            "fill-outline-color": '#6C6C6C',
+                            'fill-opacity': .7,
+                        }
+                   })
+
+                //    map.setPaintProperty('process-lines', 'fill-opacity', [
+                //     'interpolate',
+                //     ['linear', 0.5],
+                //     ['zoom'],
+                //     17.5,
+                //     1,
+                //     18.5,
+                //     0
+                //     ]);
+                }
+
+                if (geoJSONcontent.name.localeCompare("Connector Concerns") == 0){
+                    map.addSource("concerns-source",{
+                        'type': 'geojson',
+                        'data': geoJSONcontent
+                    })
+
+                    map.addLayer({
+                        'id': 'concerns',
+                        'type': 'circle',
+                        'source': 'concerns-source',
+                        'paint': {
+                            'circle-color': 'red',
+                            'circle-radius': [
+                                'interpolate',
+                                ['linear'],
+                                ['number', ['get', 'quantity']],
+                                1,
+                                2,
+                                10,
+                                4,
+                                20,
+                                8,
+                                40,
+                                12,
+                                80,
+                                16
+                            ]
+                        }
+                    });
+                }
+
+            };
+
+
+
+            // Read the GeoJSON as text
+            reader.readAsText(file, 'UTF-8');
+
+            //map.rotateTo(-118)
+            //map.setZoom(15)
+            map.jumpTo({
+                center: [-83.162422656073,42.30856689265093],
+                zoom: 17.5,
+                bearing: -118
+            })
+        }
+
+        document
+            .getElementById('file')
+            .addEventListener('change', handleFileSelect, false);
+    </script>
+
+</body>
+
+</html>
